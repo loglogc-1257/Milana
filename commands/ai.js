@@ -44,16 +44,17 @@ const handleChatResponse = async (senderId, input, pageAccessToken) => {
   }
 };
 
-// Fonction pour gérer les messages trop longs
+// Fonction pour gérer les messages trop longs tout en respectant l'ordre
 const sendLongMessage = async (senderId, message, pageAccessToken) => {
-  const maxLength = 600; // Définir la longueur maximale par message
+  const maxLength = 600; // Longueur maximale par message
   let parts = [];
 
   for (let i = 0; i < message.length; i += maxLength) {
     parts.push(message.substring(i, i + maxLength));
   }
 
-  for (const part of parts) {
-    await sendMessage(senderId, { text: part }, pageAccessToken);
+  for (let i = 0; i < parts.length; i++) {
+    await sendMessage(senderId, { text: parts[i] }, pageAccessToken);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Pause de 500ms entre chaque envoi
   }
 };
