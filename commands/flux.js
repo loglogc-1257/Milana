@@ -29,7 +29,10 @@ module.exports = {
       }
 
       await sendMessage(senderId, {
-        attachment: { type: 'image', payload: { url: imageUrl } }
+        attachment: {
+          type: 'image',
+          payload: { url: imageUrl, is_reusable: true }
+        }
       }, pageAccessToken);
     } catch (error) {
       console.error('Erreur API Flux:', error);
