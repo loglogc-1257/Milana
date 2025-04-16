@@ -3,40 +3,34 @@ const { sendMessage } = require('../handles/sendMessage');
 
 module.exports = {
   name: 'ai',
-  description: 'Génère du code ou répond à des questions comme GitHub Copilot',
-  usage: 'ai [votre message]',
+  description: 'Interact with Copilot API',
+  usage: 'gpt4 [your message]',
   author: 'coffee',
 
   async execute(senderId, args, pageAccessToken) {
     const prompt = args.join(' ');
     if (!prompt) {
       return sendMessage(senderId, {
-        text: "Veuillez entrer une demande pour que Copilot puisse répondre."
+        text: "Veuillez poser votre question ou tapez 'help' pour voir les autres commandes disponibles."
       }, pageAccessToken);
     }
 
     try {
-      const res = await axios.get(`https://api.zetsu.xyz/api/copilot?prompt=${encodeURIComponent(prompt)}`);
-      const output = res.data.response || res.data.message || res.data.text || JSON.stringify(res.data);
+      const { data } = await axios.get(`https://api.zetsu.xyz/api/copilot?prompt=${encodeURIComponent(prompt)}`);
+      const response = data.response;
 
-      // Divise la réponse si elle est trop longue
       const parts = [];
-      for (let i = 0; i < output.length; i += 1800) {
-        parts.push(output.substring(i, i + 1800));
+      for (let i = 0; i < response.length; i += 1800) {
+        parts.push(response.substring(i, i + 1800));
       }
 
-      // Envoie chaque partie
       for (const part of parts) {
         await sendMessage(senderId, { text: part }, pageAccessToken);
       }
-    } catch (error) {
-      console.error('Erreur API Copilot:', error.message);
-      if (error.response) {
-        console.error('Détails de l’erreur:', error.response.data);
-      }
-
+    } catch {
       sendMessage(senderId, {
-        text: "🤖 Une erreur est survenue en interrogeant Copilot. Réessaie plus tard."
+        text: "🤖 Oups ! Une petite erreur est survenue.\n\n" +
+              "❓ Veuillez poser votre question ou tapez 'help' pour voir les autres commandes disponibles."
       }, pageAccessToken);
     }
   }
