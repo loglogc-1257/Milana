@@ -21,8 +21,15 @@ module.exports = {
     await sendMessage(senderId, { text: '🎃🚬 Génération en cours...' }, pageAccessToken);
 
     try {
+      const response = await axios.get(apiUrl);
+      const imageUrl = response.data?.url;
+
+      if (!imageUrl) {
+        throw new Error("URL d'image non trouvée.");
+      }
+
       await sendMessage(senderId, {
-        attachment: { type: 'image', payload: { url: apiUrl } }
+        attachment: { type: 'image', payload: { url: imageUrl } }
       }, pageAccessToken);
     } catch (error) {
       console.error('Erreur API Flux:', error);
