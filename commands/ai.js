@@ -3,7 +3,7 @@ const { sendMessage } = require('../handles/sendMessage');
 
 module.exports = {
   name: 'ai',
-  description: 'Interact with Copilot API',
+  description: 'Interact with Brave-AI',
   usage: 'gpt4 [your message]',
   author: 'coffee',
 
@@ -16,7 +16,7 @@ module.exports = {
     }
 
     try {
-      const { data } = await axios.get(`https://api.zetsu.xyz/api/copilot?prompt=${encodeURIComponent(prompt)}`);
+      const { data } = await axios.get(`https://kaiz-apis.gleeze.com/api/brave-ai?ask=${encodeURIComponent(prompt)}`);
       const response = data.response;
 
       const parts = [];
