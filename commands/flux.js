@@ -1,19 +1,43 @@
 const axios = require('axios');
 const { sendMessage } = require('../handles/sendMessage');
-const fs = require('fs');
-
-const token = fs.readFileSync('token.txt', 'utf8').trim();
 
 module.exports = {
   name: 'qwen',
-  description: 'Génère une réponse basée sur un prompt avec Qwen.',
-  async execute(senderId, prompt = "Bonjour") {
+  description: "Génère un lien vers une image avec Flux",
+  usage: 'qwen [description]',
+  author: 'Stanley',
+
+  async execute(senderId, args, pageAccessToken) {
+    if (!args || args.length === 0) {
+      await sendMessage(senderId, {
+        text: '❌ Veuillez fournir une description.\n\n𝗘𝘅𝗮𝗺𝗽𝗹𝗲 : qwen un dragon rouge.'
+      }, pageAccessToken);
+      return;
+    }
+
+    const prompt = args.join(" ");
+    const apiUrl = `https://api.zetsu.xyz/api/qwen?prompt=${encodeURIComponent(prompt)}`;
+
+    // Message de chargement
+    await sendMessage(senderId, { text: '⏳ Patiente pendant la génération du lien (cela peut prendre jusqu’à 30 secondes)...' }, pageAccessToken);
+
     try {
-      const { data } = await axios.get(`https://api.zetsu.xyz/api/qwen?prompt=${encodeURIComponent(prompt)}`);
-      await sendMessage(senderId, { text: `🧠 **Réponse Qwen :**\n${data.response || data}` }, token);
+      const response = await axios.get(apiUrl, {
+        responseType: 'text',
+        timeout: 35000 // on autorise jusqu’à 35s pour être safe
+      });
+
+      const resultUrl = response.data;
+
+      await sendMessage(senderId, {
+        text: `✅ Lien généré avec succès :\n${resultUrl}`
+      }, pageAccessToken);
+
     } catch (error) {
-      console.error(error);
-      await sendMessage(senderId, { text: '❌ Une erreur est survenue lors de la génération de la réponse.' }, token);
+      console.error('Erreur lors de la génération du lien :', error.message);
+      await sendMessage(senderId, {
+        text: '❌ Une erreur est survenue pendant la génération. Essaie plus tard.'
+      }, pageAccessToken);
     }
   }
 };
