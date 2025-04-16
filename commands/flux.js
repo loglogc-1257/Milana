@@ -1,35 +1,19 @@
 const axios = require('axios');
 const { sendMessage } = require('../handles/sendMessage');
+const fs = require('fs');
+
+const token = fs.readFileSync('token.txt', 'utf8').trim();
 
 module.exports = {
-  name: 's',
-  description: 'Répond via l’API Qwen de Zetsu',
-  usage: 'S [votre message]',
-  author: 'coffee',
-
-  async execute(senderId, args, pageAccessToken) {
-    const message = args.join(' ').trim();
-
-    if (!message) {
-      return sendMessage(senderId, {
-        text: "❗Tu dois écrire un message après `S`, exemple : `S Que penses-tu de moi ?`"
-      }, pageAccessToken);
-    }
-
+  name: 'qwen',
+  description: 'Génère une réponse basée sur un prompt avec Qwen.',
+  async execute(senderId, prompt = "Bonjour") {
     try {
-      const { data } = await axios.get(`https://api.zetsu.xyz/api/qwen?prompt=${encodeURIComponent(message)}`);
-
-      if (data && data.response) {
-        return sendMessage(senderId, { text: data.response }, pageAccessToken);
-      } else {
-        return sendMessage(senderId, {
-          text: "🤖 L'API Qwen a répondu, mais sans contenu exploitable."
-        }, pageAccessToken);
-      }
+      const { data } = await axios.get(`https://api.zetsu.xyz/api/qwen?prompt=${encodeURIComponent(prompt)}`);
+      await sendMessage(senderId, { text: `🧠 **Réponse Qwen :**\n${data.response || data}` }, token);
     } catch (error) {
-      return sendMessage(senderId, {
-        text: "🤖 Une erreur est survenue avec l’API Qwen. Réessaie plus tard."
-      }, pageAccessToken);
+      console.error(error);
+      await sendMessage(senderId, { text: '❌ Une erreur est survenue lors de la génération de la réponse.' }, token);
     }
   }
 };
