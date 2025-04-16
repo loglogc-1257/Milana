@@ -25,14 +25,11 @@ module.exports = {
       const imageUrl = response.data?.url;
 
       if (!imageUrl) {
-        throw new Error("URL d'image non trouvée.");
+        throw new Error("Aucune URL trouvée dans la réponse de l’API.");
       }
 
       await sendMessage(senderId, {
-        attachment: {
-          type: 'image',
-          payload: { url: imageUrl, is_reusable: true }
-        }
+        text: `✅ Voici ton image :\n${imageUrl}`
       }, pageAccessToken);
     } catch (error) {
       console.error('Erreur API Flux:', error);
