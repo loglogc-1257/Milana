@@ -18,25 +18,24 @@ module.exports = {
     const prompt = args.join(" ");
     const apiUrl = `https://api.zetsu.xyz/api/qwen?prompt=${encodeURIComponent(prompt)}`;
 
-    // Message de chargement
-    await sendMessage(senderId, { text: '⏳ Patiente pendant la génération du lien (cela peut prendre jusqu’à 30 secondes)...' }, pageAccessToken);
+    await sendMessage(senderId, { text: '⏳ Patiente pendant la génération du lien (jusqu’à 30-60 secondes)...' }, pageAccessToken);
 
     try {
       const response = await axios.get(apiUrl, {
         responseType: 'text',
-        timeout: 35000 // on autorise jusqu’à 35s pour être safe
+        timeout: 60000 // Attend jusqu’à 60 secondes
       });
 
       const resultUrl = response.data;
 
       await sendMessage(senderId, {
-        text: `✅ Lien généré avec succès :\n${resultUrl}`
+        text: `✅ Lien généré :\n${resultUrl}`
       }, pageAccessToken);
 
     } catch (error) {
       console.error('Erreur lors de la génération du lien :', error.message);
       await sendMessage(senderId, {
-        text: '❌ Une erreur est survenue pendant la génération. Essaie plus tard.'
+        text: '❌ Une erreur est survenue pendant la génération. Essaie à nouveau un peu plus tard.'
       }, pageAccessToken);
     }
   }
