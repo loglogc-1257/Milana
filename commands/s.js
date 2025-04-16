@@ -2,8 +2,8 @@ const axios = require('axios');
 const { sendMessage } = require('../handles/sendMessage');
 
 module.exports = {
-  name: 's', // nom de la commande = s
-  description: 'Humanise un message via l’API Humanizer',
+  name: 's',
+  description: 'Répond de manière stylée via l’API gf de Zetsu',
   usage: 'S [votre message]',
   author: 'coffee',
 
@@ -12,16 +12,16 @@ module.exports = {
 
     if (!message) {
       return sendMessage(senderId, {
-        text: "❗Tu dois écrire un message après `S`, exemple : `S Salut comment tu vas ?`"
+        text: "❗Tu dois écrire un message après `S`, exemple : `S Tu me manques`"
       }, pageAccessToken);
     }
 
     try {
-      const { data } = await axios.get(`https://kaiz-apis.gleeze.com/api/humanizer?q=${encodeURIComponent(message)}`);
+      const { data } = await axios.get(`https://api.zetsu.xyz/api/gf?q=${encodeURIComponent(message)}`);
       return sendMessage(senderId, { text: data.response }, pageAccessToken);
     } catch {
       return sendMessage(senderId, {
-        text: "🤖 Une erreur est survenue avec Humanizer. Réessaie plus tard."
+        text: "🤖 Une erreur est survenue avec l’API GF. Réessaie plus tard."
       }, pageAccessToken);
     }
   }
