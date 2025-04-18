@@ -1,7 +1,5 @@
 const axios = require('axios');
 const { sendMessage } = require('../handles/sendMessage');
-const fs = require('fs');
-const path = require('path');
 
 module.exports = {
   name: 'flux',
@@ -24,25 +22,23 @@ module.exports = {
     await sendMessage(senderId, { text: '♻️ Génération en cours...' }, pageAccessToken);
 
     try {
-      // Téléchargement de l'image
+      // Télécharger l'image depuis l'API
       const response = await axios.get(apiUrl, { responseType: 'arraybuffer' });
 
-      // Enregistrement temporaire de l'image
-      const imageBuffer = Buffer.from(response.data, 'binary');
-      const tempImagePath = path.join(__dirname, 'temp_image.png');
-      fs.writeFileSync(tempImagePath, imageBuffer);
+      // Héberger l'image sur un service tiers (par exemple, Imgur, Cloudinary)
+      // Supposons que vous ayez une fonction uploadImage qui retourne l'URL de l'image hébergée
+      const imageUrl = await uploadImage(response.data);
 
-      // Envoi de l'image via Messenger
+      // Envoyer l'image via Messenger en utilisant l'URL
       await sendMessage(senderId, {
         attachment: {
           type: 'image',
-          payload: {}
-        },
-        filedata: fs.createReadStream(tempImagePath)
+          payload: {
+            url: imageUrl,
+            is_reusable: true
+          }
+        }
       }, pageAccessToken);
-
-      // Suppression de l'image temporaire
-      fs.unlinkSync(tempImagePath);
     } catch (error) {
       console.error('Erreur lors de la génération de l’image:', error);
       await sendMessage(senderId, { text: "❌ Erreur lors de la génération de l’image." }, pageAccessToken);
