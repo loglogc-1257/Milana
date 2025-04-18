@@ -1,45 +1,51 @@
 const axios = require('axios');
 const { sendMessage } = require('../handles/sendMessage');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
-  name: 'qwen',
-  description: "Génère une image avec l'intelligence artificielle DALL·E 3",
-  usage: 'qwen [description]',
+  name: 'flux',
+  description: "Génère une image avec DALL·E 3 via Zetsu",
+  usage: 'flux [prompt]',
   author: 'Stanley',
 
   async execute(senderId, args, pageAccessToken) {
     if (!args || args.length === 0) {
       await sendMessage(senderId, {
-        text: '❌ Tu dois fournir une description pour générer une image.\n\n𝗘𝘅𝗲𝗺𝗽𝗹𝗲: qwen un dragon rouge dans une forêt enchantée.'
+        text: '❌ Veuillez fournir une description.\n\n𝗘𝘅𝗮𝗺𝗽𝗹𝗲: flux un dragon rouge.'
       }, pageAccessToken);
       return;
     }
 
     const prompt = args.join(" ");
-    const apiUrl = `https://api.zetsu.xyz/api/dalle-3?prompt=${encodeURIComponent(prompt)}&apikey=33b3f9c359186f7ef15aeb39c422f88d`;
+    const apiKey = '33b3f9c359186f7ef15aeb39c422f88d';
+    const apiUrl = `https://api.zetsu.xyz/api/dalle-3?prompt=${encodeURIComponent(prompt)}&apikey=${apiKey}`;
 
-    await sendMessage(senderId, { text: '⏳ Génération de l’image en cours, patiente un peu...' }, pageAccessToken);
+    await sendMessage(senderId, { text: '♻️ Génération en cours...' }, pageAccessToken);
 
     try {
-      const response = await axios.get(apiUrl);
+      // Téléchargement de l'image
+      const response = await axios.get(apiUrl, { responseType: 'arraybuffer' });
 
-      // Vérifie que l’URL de l’image est bien présente dans la réponse
-      const imageUrl = response.data?.url || response.data?.image || response.data?.data;
-      if (!imageUrl || typeof imageUrl !== 'string') {
-        throw new Error("URL de l'image non trouvée ou invalide.");
-      }
+      // Enregistrement temporaire de l'image
+      const imageBuffer = Buffer.from(response.data, 'binary');
+      const tempImagePath = path.join(__dirname, 'temp_image.png');
+      fs.writeFileSync(tempImagePath, imageBuffer);
 
+      // Envoi de l'image via Messenger
       await sendMessage(senderId, {
         attachment: {
           type: 'image',
-          payload: { url: imageUrl }
-        }
+          payload: {}
+        },
+        filedata: fs.createReadStream(tempImagePath)
       }, pageAccessToken);
+
+      // Suppression de l'image temporaire
+      fs.unlinkSync(tempImagePath);
     } catch (error) {
-      console.error('Erreur API DALL·E:', error);
-      await sendMessage(senderId, {
-        text: "❌ Une erreur est survenue pendant la génération de l’image. Réessaie avec une autre description ou plus tard."
-      }, pageAccessToken);
+      console.error('Erreur lors de la génération de l’image:', error);
+      await sendMessage(senderId, { text: "❌ Erreur lors de la génération de l’image." }, pageAccessToken);
     }
   }
 };
