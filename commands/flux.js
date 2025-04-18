@@ -16,17 +16,26 @@ module.exports = {
     }
 
     const prompt = args.join(" ");
-    const apiUrl = `https://api.zetsu.xyz/api/dalle-3?prompt=${encodeURIComponent(prompt)}&apikey=33b3f9c359186f7ef15aeb39c422f88d`;
+    const apiEndpoint = `https://api.zetsu.xyz/api/dalle-3?prompt=${encodeURIComponent(prompt)}&apikey=33b3f9c359186f7ef15aeb39c422f88d`;
 
     await sendMessage(senderId, { text: '⏳ Création de l’image, un instant...' }, pageAccessToken);
 
     try {
+      const response = await axios.get(apiEndpoint);
+      const imageUrl = response.data?.url || response.data?.image;
+
+      if (!imageUrl) {
+        throw new Error("URL de l'image non trouvée dans la réponse.");
+      }
+
       await sendMessage(senderId, {
-        attachment: { type: 'image', payload: { url: apiUrl } }
+        attachment: { type: 'image', payload: { url: imageUrl } }
       }, pageAccessToken);
     } catch (error) {
-      console.error('Erreur API DALL·E:', error);
-      await sendMessage(senderId, { text: "❌ Une erreur est survenue lors de la génération." }, pageAccessToken);
+      console.error('Erreur API DALL·E:', error.message);
+      await sendMessage(senderId, {
+        text: "❌ Impossible de générer l’image. Réessaie avec une autre description."
+      }, pageAccessToken);
     }
   }
 };
