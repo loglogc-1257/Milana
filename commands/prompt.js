@@ -22,7 +22,7 @@ module.exports = {
 
       const prompt = prompts[index - 1];
       await sendMessage(senderId, {
-        text: `💡 **Prompt ${index} :**\n${prompt}`
+        text: prompt
       }, token);
 
     } catch (error) {
