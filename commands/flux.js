@@ -3,50 +3,30 @@ const { sendMessage } = require('../handles/sendMessage');
 
 module.exports = {
   name: 'qwen',
-  description: "Test de l'API de génération d'image en envoyant plusieurs prompts",
-  usage: 'qwen [prompt1] [prompt2] ...',
+  description: "Crée une image à partir d'une description",
+  usage: 'qwen [description]',
   author: 'Stanley',
 
   async execute(senderId, args, pageAccessToken) {
     if (!args || args.length === 0) {
       await sendMessage(senderId, {
-        text: '❌ Veuillez fournir au moins un prompt pour tester l\'API.'
+        text: '❌ Tu dois fournir une description pour générer une image.\n\n𝗘𝘅𝗲𝗺𝗽𝗹𝗲: qwen un paysage futuriste.'
       }, pageAccessToken);
       return;
     }
 
-    const prompts = args.join(", ");
-    const apiUrl = `https://api.zetsu.xyz/api/qwen?prompt=${encodeURIComponent(prompts)}`;
+    const prompt = args.join(" ");
+    const apiUrl = `https://api.zetsu.xyz/api/dalle-3?prompt=${encodeURIComponent(prompt)}&apikey=33b3f9c359186f7ef15aeb39c422f88d`;
 
-    // Message de chargement
-    await sendMessage(senderId, { text: '⏳ Test en cours... Veuillez patienter jusqu’à 60 secondes.' }, pageAccessToken);
+    await sendMessage(senderId, { text: '⏳ Création de l’image, un instant...' }, pageAccessToken);
 
     try {
-      const response = await axios.get(apiUrl, {
-        responseType: 'text',
-        timeout: 60000 // Jusqu’à 60 secondes d'attente
-      });
-
-      const resultUrl = response.data;
-
       await sendMessage(senderId, {
-        text: `✅ Voici le lien généré :\n${resultUrl}`
+        attachment: { type: 'image', payload: { url: apiUrl } }
       }, pageAccessToken);
-
     } catch (error) {
-      if (error.code === 'ECONNABORTED') {
-        // Timeout après 60 secondes
-        console.error('Erreur de timeout API :', error.message);
-        await sendMessage(senderId, {
-          text: '❌ Le délai d\'attente de 60 secondes a été dépassé. Veuillez réessayer plus tard.'
-        }, pageAccessToken);
-      } else {
-        // Autres erreurs
-        console.error('Erreur lors de la requête API :', error.message);
-        await sendMessage(senderId, {
-          text: '❌ Une erreur est survenue lors de la génération. Veuillez réessayer plus tard.'
-        }, pageAccessToken);
-      }
+      console.error('Erreur API DALL·E:', error);
+      await sendMessage(senderId, { text: "❌ Une erreur est survenue lors de la génération." }, pageAccessToken);
     }
   }
 };
