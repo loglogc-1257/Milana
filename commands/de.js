@@ -9,9 +9,7 @@ module.exports = {
   usage: 'de [prompt]',
   author: 'vex_Kshitiz',
 
-  async execute(senderId, args, pageAccessToken, { event, api }) {
-    api.setMessageReaction("🕐", event.messageID, (err) => {}, true);
-
+  async execute(senderId, args, pageAccessToken) {
     if (!args || args.length === 0) {
       await sendMessage(senderId, {
         text: '❌ Veuillez fournir une description.\n\n𝗘𝘅𝗮𝗺𝗽𝗹𝗲: de un château sous la pluie.'
@@ -38,29 +36,16 @@ module.exports = {
       }
 
       const imageUrl = apiResponse.data.imageUrl;
-      const imagePath = path.join(__dirname, "cache", `de.png`);
-      const imageResponse = await axios.get(imageUrl, { responseType: "stream" });
 
-      const writer = fs.createWriteStream(imagePath);
-      imageResponse.data.pipe(writer);
-
-      writer.on("finish", async () => {
-        const stream = fs.createReadStream(imagePath);
-        await sendMessage(senderId, {
-          attachment: {
-            type: 'image',
-            payload: {
-              is_reusable: true,
-              url: `file://${imagePath}` // Messenger requiert normalement une URL publique
-            }
+      await sendMessage(senderId, {
+        attachment: {
+          type: 'image',
+          payload: {
+            url: imageUrl,
+            is_reusable: true
           }
-        }, pageAccessToken);
-      });
-
-      writer.on("error", async (err) => {
-        console.error("Erreur d'écriture de fichier:", err);
-        await sendMessage(senderId, { text: "❌ Erreur lors du traitement de l’image." }, pageAccessToken);
-      });
+        }
+      }, pageAccessToken);
 
     } catch (error) {
       console.error("Erreur lors de la génération de l’image:", error);
