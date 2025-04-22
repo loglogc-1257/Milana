@@ -1,41 +1,42 @@
-const fs = require("fs");
-const path = require("path");
-const axios = require("axios");
-const { sendMessage } = require('../handles/sendMessage');
-
-// Lire le token de la page depuis le fichier 'token.txt'
-const tokenPath = './token.txt';
-const pageAccessToken = fs.readFileSync(tokenPath, 'utf8').trim();
+const axios = require('axios');
+const { sendMessage } = require('../handles/sendMessage'); // Assurez-vous que cette méthode est bien définie dans votre code.
 
 module.exports = {
   config: {
-    name: "de",
+    name: "de", // Nom de la commande
     aliases: [],
     version: "1.0",
-    author: "vex_Kshitiz",
+    author: "vex_Kshitiz", // Auteur
     countDown: 5,
     role: 0,
-    shortDescription: "Dalle- E",
-    longDescription: "Dall - E",
+    shortDescription: "DALL·E Image Generator",
+    longDescription: "Cette commande génère des images à partir de DALL·E.",
     category: "image",
     guide: {
-      en: "{p}meina [prompt]"
+      en: "{p}meina [prompt]" // Guide pour l'utilisation de la commande
     }
   },
 
-  onStart: async function ({ senderId, args }) {
-    try {
-      const baseUrl = "https://kshitiz-t2i-x6te.onrender.com/sdxl";
-      let prompt = '';
-      const model_id = 33;
+  onStart: async function ({ api, event, args }) {
+    // Envoie un message de réaction pour indiquer que la demande est en cours
+    api.setMessageReaction("🕐", event.messageID, (err) => {}, true);
 
+    try {
+      // Vérification du prompt fourni par l'utilisateur
+      let prompt = '';
       if (args.length > 0) {
         prompt = args.join(" ").trim();
       } else {
-        await sendMessage(senderId, "❌ | Please provide a prompt.", pageAccessToken);
-        return;
+        return api.sendMessage("❌ | Veuillez fournir un prompt. Exemple: `{prefix}de meina, un cheval dans un champ sous le ciel étoilé`", event.threadID);
       }
 
+      // L'URL de l'API qui génère les images
+      const baseUrl = "https://kshitiz-t2i-x6te.onrender.com/sdxl";  // Assurez-vous que cette URL est correcte et fonctionne.
+
+      // Paramètres pour appeler l'API
+      const model_id = 33; // Utilisez le modèle approprié pour générer les images
+
+      // Appel à l'API pour générer l'image
       const apiResponse = await axios.get(baseUrl, {
         params: {
           prompt: prompt,
@@ -43,25 +44,24 @@ module.exports = {
         }
       });
 
+      // Vérification si une URL d'image a été retournée par l'API
       if (apiResponse.data.imageUrl) {
         const imageUrl = apiResponse.data.imageUrl;
-        const imagePath = path.join(__dirname, "cache", `de.png`);
-        const imageResponse = await axios.get(imageUrl, { responseType: "stream" });
-        const imageStream = imageResponse.data.pipe(fs.createWriteStream(imagePath));
 
-        imageStream.on("finish", async () => {
-          const stream = fs.createReadStream(imagePath);
-          await sendMessage(senderId, {
-            body: "",
-            attachment: stream
-          }, pageAccessToken);
-        });
+        // Téléchargement de l'image à partir de l'URL obtenue
+        const imageResponse = await axios.get(imageUrl, { responseType: 'stream' });
+
+        // Envoi de l'image à l'utilisateur
+        api.sendMessage({
+          body: "✅ | Voici ton image générée 😘",
+          attachment: imageResponse.data
+        }, event.threadID);
       } else {
-        throw new Error("Image URL not found in response");
+        throw new Error("Aucune image générée, réponse vide.");
       }
     } catch (error) {
-      console.error("Error:", error);
-      await sendMessage(senderId, "❌ | An error occurred. Please try again later.", pageAccessToken);
+      console.error("Erreur lors de la génération de l'image:", error);
+      api.sendMessage("❌ | Une erreur s'est produite. Veuillez réessayer plus tard.", event.threadID);
     }
   }
 };
