@@ -1,32 +1,36 @@
-// createai
-const axios = require("axios");
+const axios = require('axios');
+const fs = require('fs');
 const { sendMessage } = require('../handles/sendMessage');
 
-module.exports = {
-  name: "createai",
-  description: "Créer une image avec AI",
-  role: 1,
-  author: "YourName",
+const tokenPath = './token.txt';
+const pageAccessToken = fs.readFileSync(tokenPath, 'utf8').trim();
 
-  async execute(api, event, args) {
-    if (!args || args.length === 0) {
-      await sendMessage(api, { text: "Veuillez fournir un texte pour générer une image." }, event.threadID);
+module.exports = {
+  name: 'createai',
+  description: 'Générer une image avec AI à partir d’un prompt.',
+  usage: '-createai prompt',
+  author: 'TonNom',
+
+  async execute(senderId, args) {
+    // Vérifie que `args` est bien un tableau avec du contenu
+    if (!args || !Array.isArray(args) || args.length === 0) {
+      await sendMessage(senderId, { text: 'Veuillez fournir un prompt pour générer une image.' }, pageAccessToken);
       return;
     }
 
-    const query = args.join(" ");
-    const imageUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(query);
+    const prompt = args.join(' ');
+    const imageUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt);
 
     try {
-      await sendMessage(api, {
-        attachment: {
-          type: "image",
-          payload: { url: imageUrl }
-        }
-      }, event.threadID);
+      const attachment = {
+        type: 'image',
+        payload: { url: imageUrl }
+      };
+
+      await sendMessage(senderId, { attachment }, pageAccessToken);
     } catch (error) {
-      console.error("Erreur lors de l'envoi de l'image :", error);
-      await sendMessage(api, { text: "Une erreur est survenue lors de la génération de l'image." }, event.threadID);
+      console.error('Erreur lors de la génération de l’image :', error);
+      await sendMessage(senderId, { text: 'Erreur : impossible de générer l’image.' }, pageAccessToken);
     }
   }
 };
