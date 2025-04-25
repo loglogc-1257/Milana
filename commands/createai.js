@@ -12,14 +12,20 @@ module.exports = {
   author: 'TonNom',
 
   async execute(senderId, args) {
-    // Vérifie que `args` est bien un tableau avec du contenu
     if (!args || !Array.isArray(args) || args.length === 0) {
       await sendMessage(senderId, { text: 'Veuillez fournir un prompt pour générer une image.' }, pageAccessToken);
       return;
     }
 
-    const prompt = args.join(' ');
-    const imageUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt);
+    let prompt = args.join(' ');
+    
+    // Limiter à 250 caractères pour éviter des erreurs
+    if (prompt.length > 1900) {
+      prompt = prompt.slice(0, 1900);
+    }
+
+    const encodedPrompt = encodeURIComponent(prompt);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}`;
 
     try {
       const attachment = {
