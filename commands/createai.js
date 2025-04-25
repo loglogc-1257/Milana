@@ -1,6 +1,6 @@
 // createai
 const axios = require("axios");
-const { sendMessage } = require("path-to-sendMessage");
+const { sendMessage } = require('../handles/sendMessage');
 
 module.exports = {
   name: "createai",
