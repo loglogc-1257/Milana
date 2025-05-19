@@ -17,17 +17,35 @@ module.exports = {
 
     try {
       const { data } = await axios.get(`https://kaiz-apis.gleeze.com/api/gpt-4o-pro?ask=${encodeURIComponent(prompt)}&uid=${senderId}&imageUrl=&apikey=7a8e29cc-18c8-4e69-99ef-209169503342`);
-      const response = data.response;
 
+      const responseText = data.response || '';
+      const imageUrl = data.images || null;
+
+      // Découpage si réponse trop longue
       const parts = [];
-      for (let i = 0; i < response.length; i += 1800) {
-        parts.push(response.substring(i, i + 1800));
+      for (let i = 0; i < responseText.length; i += 1800) {
+        parts.push(responseText.substring(i, i + 1800));
       }
 
       for (const part of parts) {
         await sendMessage(senderId, { text: part }, pageAccessToken);
       }
-    } catch {
+
+      // Envoi de l'image si disponible
+      if (imageUrl) {
+        await sendMessage(senderId, {
+          attachment: {
+            type: "image",
+            payload: {
+              url: imageUrl,
+              is_reusable: true
+            }
+          }
+        }, pageAccessToken);
+      }
+
+    } catch (err) {
+      console.error("Erreur API AI:", err.message || err);
       sendMessage(senderId, {
         text: "🤖 Oups ! Une petite erreur est survenue.\n\n" +
               "❓ Veuillez poser votre question ou tapez 'help' pour voir les autres commandes disponibles."
