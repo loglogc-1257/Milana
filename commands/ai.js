@@ -31,16 +31,10 @@ module.exports = {
         await sendMessage(senderId, { text: part }, pageAccessToken);
       }
 
-      // Envoi de l'image si disponible
+      // Envoi du lien image en texte s'il existe
       if (imageUrl) {
         await sendMessage(senderId, {
-          attachment: {
-            type: "image",
-            payload: {
-              url: imageUrl,
-              is_reusable: true
-            }
-          }
+          text: `Voici l'image générée : ${imageUrl}`
         }, pageAccessToken);
       }
 
